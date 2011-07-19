@@ -1,0 +1,50 @@
+#!/usr/bin/env ruby
+
+require 'compass'
+Compass.add_project_configuration('config.rb')
+
+compile '/style/*' do
+  filter :sass, Compass.sass_engine_options
+end
+
+compile '/stylesheets/partials/*/' do
+  # don’t compile partials
+end
+
+compile '/' do
+  filter :redcarpet
+  layout 'default'
+end
+
+compile '*' do
+  next if item.binary? # don’t filter binary items
+  case item[:extension]
+  when 'md'
+    filter :redcarpet
+  when 'erb'
+    filter :erb
+  end
+  layout 'default'
+end
+
+route '/style/_*/' do
+  # don't output partials, so return nil
+  nil
+end
+
+route '/style/*/' do
+  # don't generate a directory like we do for HTML files
+  item.identifier.chop + '.css'
+end
+
+route '*' do
+  if item.binary?
+    # Write item with identifier /foo/ to /foo.ext
+    item.identifier.chop + '.' + item[:extension]
+  else
+    # Write item with identifier /foo/ to /foo/index.html
+    item.identifier + 'index.html'
+  end
+end
+
+layout '*', :erb
